@@ -1,0 +1,53 @@
+# Define a namespace for action
+apiVersion: v1 
+kind: Namespace
+metadata:
+  name: action-system 
+---
+# Deployment defines how I want the Pod configured and how it should run
+apiVersion: apps/v1
+kind: Deployment 
+metadata: 
+  name: action-pod # base Pod name
+  namespace: action-system 
+spec:
+  selector:
+    matchLabels:
+      app: action 
+  template:
+    metadata:
+      labels:
+        app: action # Selector for Pod name search. Enables query by label on cmd line.
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet 
+      hostNetwork: true 
+      terminationGracePeriodSeconds: 60
+      # the containers to run in the Pod
+      containers:
+        # sales-api container configuration
+      - name: action-api 
+        # gets patched to the specific docker image name in kind/action-pod/kustomization.yaml
+        # done to avoid hardcoding image name and version
+        image: action-api-image
+        ports:
+        - name: action-api 
+          containerPort: 3000 
+        - name: action-api-debug 
+          containerPort: 4000 
+--- 
+apiVersion: v1 
+kind: Service 
+metadata: 
+  name: action-service 
+  namespace: action-system 
+spec: 
+  type: ClusterIP 
+  selector:
+    app: action 
+  ports:
+  - name: action-api 
+    port: 3000 
+    targetPort: action-api 
+  - name: action-api-debug 
+    port: 4000 
+    targetPort: action-api-debug

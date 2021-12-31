@@ -1,0 +1,11 @@
+# this file patches the yaml in this directory into the base directory yaml
+apiVersion: kustomize.config.k8s.io/v1beta1 
+kind: Kustomization 
+resources:
+- ../../base/action-pod/ 
+patchesStrategicMerge:
+- ./kind-action-patch.yaml 
+images:
+- name: action-api-image 
+  newName: action-api-amd64 
+  newTag: "0.1"
