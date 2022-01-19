@@ -29,12 +29,14 @@ spec:
         # gets patched to the specific docker image name in kind/action-pod/kustomization.yaml
         # done to avoid hardcoding image name and version
         image: action-api-image
+        # name the ports that the deployment needs to be aware of
         ports:
         - name: action-api 
           containerPort: 3000 
-        - name: action-api-debug 
+        - name: action-debug 
           containerPort: 4000 
 --- 
+# Service definition exposes ports and maps them to those above in the deployment
 apiVersion: v1 
 kind: Service 
 metadata: 
@@ -48,6 +50,6 @@ spec:
   - name: action-api 
     port: 3000 
     targetPort: action-api 
-  - name: action-api-debug 
+  - name: action-debug 
     port: 4000 
-    targetPort: action-api-debug
+    targetPort: action-debug
