@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"expvar"
 	"fmt"
 	"net/http"
 	"os"
@@ -55,6 +56,8 @@ func run(log *zap.SugaredLogger) error {
 	// add `mask` or `noprint` to the end of a conf line to
 	// obscure or hide cmd line output of config variable
 
+	// literal struct so it can't be passed around
+	// we never pass the full config around. Packages can request the specifics they need
 	cfg := struct {
 		conf.Version
 		Web struct {
@@ -79,6 +82,8 @@ func run(log *zap.SugaredLogger) error {
 	help, err := conf.ParseOSArgs(prefix, &cfg)
 
 	if err != nil {
+		// display help to user if err type is ErrHelpWanted
+		// this will trigger if the `--help` flag is passed
 		if errors.Is(err, conf.ErrHelpWanted) {
 			fmt.Println(help)
 			return nil
@@ -98,6 +103,8 @@ func run(log *zap.SugaredLogger) error {
 	}
 	log.Infow("startup", "config", out)
 
+	expvar.NewString("build").Set(build)
+
 	// ========================================================================================
 	// Start Debug Service
 
@@ -111,6 +118,7 @@ func run(log *zap.SugaredLogger) error {
 
 	// Start the service listening for debug requests.
 	// Not concerned with shutting this down with load shedding.
+	// This is an exception to the 'parent/child' goroutine relationship
 	go func() {
 		if err := http.ListenAndServe(cfg.Web.DebugHost, debugMux); err != nil {
 			log.Errorw("shutdown", "status", "debug router closed", "host", cfg.Web.DebugHost, "ERROR", err)
@@ -140,13 +148,18 @@ func run(log *zap.SugaredLogger) error {
 
 	// Make a channel to listen for errors coming from the listener.
 	// Use a buffered channel so the goroutine can exit if we don't collect this error.
+	//
+	// The `case err := <-serverErrors` will not be available when api.Shutdown (ln 182) is called
+	// because we're way beyond the blocking select, execution is inside api.Shutdown()
+	// the below goroutine still needs to complete so we give it a buffered channel, where the send
+	// can happen before the receive
 	serverErrors := make(chan error, 1)
 
 	// Start the service listening for api requests
 	// this goroutine exists to start processing traffic over :3000
 	// it gives it to the mux which decides the appropriate hander
 	//
-	// this is the parent go routine of all goroutines created in the course of processing a request
+	// this is the parent go routine of all goroutines created in the course of processing requests
 	go func() {
 		log.Infow("startup", "status", "api router started", "host", api.Addr)
 		serverErrors <- api.ListenAndServe()
@@ -155,7 +168,7 @@ func run(log *zap.SugaredLogger) error {
 	// ========================================================================================
 	// Shutdown
 
-	// Blocking main goroutine and waiting for shutdown.
+	// this blocking select blocks main goroutine and waits for shutdown.
 	select {
 	case err := <-serverErrors:
 		return fmt.Errorf("server error: %w", err)
