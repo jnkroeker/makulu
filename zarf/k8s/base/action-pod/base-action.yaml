@@ -35,8 +35,46 @@ spec:
           containerPort: 3000 
         - name: action-debug 
           containerPort: 4000 
+        # hit readiness endpoint every 15 seconds on port 4000
+        readinessProbe: 
+          httpGet:
+            path: /debug/readiness 
+            port: 4000 
+          initialDelaySeconds: 15 
+          periodSeconds: 15 
+          timeoutSeconds: 5 
+          successThreshold: 1 
+          failureThreshold: 2 
+        # hit liveness endpoint every 30 seconds on port 4000
+        livenessProbe:
+          httpGet:
+            path: /debug/liveness 
+            port: 4000 
+          initialDelaySeconds: 30 
+          periodSeconds: 30 
+          timeoutSeconds: 5 
+          successThreshold: 1 
+          failureThreshold: 2 
+        # env will set the below env variables up so we can read them in our liveness handler
+        env:
+          - name: KUBERNETES_NAMESPACE 
+            valueFrom:
+              fieldRef: 
+                fieldPath: metadata.namespace 
+          - name: KUBERNETES_PODNAME 
+            valueFrom: 
+              fieldRef: 
+                fieldPath: metadata.name 
+          - name: KUBERNETES_NAMESPACE_POD_ID 
+            valueFrom: 
+              fieldRef: 
+                fieldPath: status.podIP 
+          - name: KUBERNETES_NODENAME 
+            valueFrom:
+              fieldRef: 
+                fieldPath: spec.nodeName 
 --- 
-# Service definition exposes ports and maps them to those above in the deployment
+# Service definition exposes external ports and maps them to those above in the deployment
 apiVersion: v1 
 kind: Service 
 metadata: 
