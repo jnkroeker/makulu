@@ -12,9 +12,9 @@ import (
 	"net/http/pprof"
 	"os"
 
-	"github.com/dimfeld/httptreemux/v5"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/debug/checkgrp"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/testgrp"
+	"github.com/jnkroeker/makulu/foundation/web"
 	"go.uber.org/zap"
 )
 
@@ -60,14 +60,25 @@ type APIMuxConfig struct {
 }
 
 // APIMux constructs an http.Handler with all application routes defined.
-// *always return a concrete type
-func APIMux(cfg APIMuxConfig) *httptreemux.ContextMux {
-	mux := httptreemux.NewContextMux()
+// Remember to always return a concrete type, never abstract for the user
+func APIMux(cfg APIMuxConfig) *web.App {
+
+	// this creates a wrapper (App) to put around our handler (tgh.Test)
+	// for graceful error handling in a custom Handle() method.
+	// This way the handler (tgh.Test) is not directly exposed to the mux
+	app := web.NewApp(cfg.Shutdown)
+
+	v1(app, cfg)
+
+	return app
+}
+
+// v1 binds all the version 1 routes.
+func v1(app *web.App, cfg APIMuxConfig) {
+	const version = "v1"
 
 	tgh := testgrp.Handlers{
 		Log: cfg.Log,
 	}
-	mux.Handle(http.MethodGet, "/v1/test", tgh.Test)
-
-	return mux
+	app.Handle(http.MethodGet, version, "/test", tgh.Test)
 }

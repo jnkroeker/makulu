@@ -154,10 +154,10 @@ func run(log *zap.SugaredLogger) error {
 	// Make a channel to listen for errors coming from the listener.
 	// Use a buffered channel so the goroutine can exit if we don't collect this error.
 	//
-	// The `case err := <-serverErrors` will not be available when api.Shutdown (ln 182) is called
-	// because we're way beyond the blocking select, execution is inside api.Shutdown()
-	// the below goroutine still needs to complete so we give it a buffered channel, where the send
-	// can happen before the receive
+	// The `case err := <-serverErrors` will not be available when api.Shutdown is called from within `case sig := <-shutdown`
+	// because we're way beyond the blocking select, execution is inside the api.Shutdown() call.
+	// The below goroutine still needs to complete so we give it a buffered channel, where the send
+	// can happen before the recieve
 	serverErrors := make(chan error, 1)
 
 	// Start the service listening for api requests
