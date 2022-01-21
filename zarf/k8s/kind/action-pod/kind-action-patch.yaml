@@ -1,5 +1,5 @@
 # this information can't be in the base directory
-# different environments are going to want different replica count, differend strategies
+# different environments are going to want different replica count, different strategies
 # thus this should be patched into the base, using Kustomize
 apiVersion: apps/v1 
 kind: Deployment 
