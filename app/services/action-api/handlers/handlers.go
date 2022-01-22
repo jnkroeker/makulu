@@ -14,6 +14,7 @@ import (
 
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/debug/checkgrp"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/testgrp"
+	"github.com/jnkroeker/makulu/business/web/mid"
 	"github.com/jnkroeker/makulu/foundation/web"
 	"go.uber.org/zap"
 )
@@ -66,7 +67,10 @@ func APIMux(cfg APIMuxConfig) *web.App {
 	// this creates a wrapper (App) to put around our handler (tgh.Test)
 	// for graceful error handling in a custom Handle() method.
 	// This way the handler (tgh.Test) is not directly exposed to the mux
-	app := web.NewApp(cfg.Shutdown)
+	app := web.NewApp(
+		cfg.Shutdown,
+		mid.Logger(cfg.Log),
+	)
 
 	v1(app, cfg)
 
