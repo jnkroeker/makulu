@@ -22,19 +22,26 @@ func Logger(log *zap.SugaredLogger) web.Middleware {
 
 	m := func(handler web.Handler) web.Handler {
 
+		// we can however hide things we need for debugging in the context
+		// in the foundation/web/context file, the values type will be in every http request
 		h := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			// important to know the different log lines assocated with different requests
-			traceId := "000000000000"
-			statusCode := http.StatusOK
-			now := time.Now()
 
-			log.Infow("request started", "traceid", traceId, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr)
+			// If the context is missing the value, request the service
+			// to be shutdown gracefully.
+			v, err := web.GetValues(ctx)
+			if err != nil {
+				return err
+			}
 
-			err := handler(ctx, w, r)
+			log.Infow("request started", "traceid", v.TraceID, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr)
 
-			log.Infow("request completed", "traceid", traceId, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr,
-				"statusCode", statusCode, "since", time.Since(now))
+			// Call the next handler
+			err = handler(ctx, w, r)
 
+			log.Infow("request completed", "traceid", v.TraceID, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr,
+				"statusCode", v.StatusCode, "since", time.Since(v.Now))
+
+			// Return the error so it can be handled futher up the chain.
 			return err
 		}
 

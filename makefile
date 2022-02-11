@@ -5,6 +5,9 @@ SHELL := /bin/bash
 
 # expvarmon -ports=":4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
 
+# put 10,000 requests through a service to test metrics gathering, logging, the whole onion
+# hey -m GET -c 100 -n 10000 http://localhost:3000/v1/users/1/2
+
 # ============================================================================
 
 # --help shows the user usage options for cmd line flags 

@@ -13,6 +13,9 @@ import (
 // If we decide to give teams the flexibility to use other return types; this goes in business layer.
 func Respond(ctx context.Context, w http.ResponseWriter, data interface{}, statusCode int) error {
 
+	// Set the status code for the request logger middleware
+	SetStatusCode(ctx, statusCode)
+
 	// If there is nothing to marshal then set status code and return.
 	if statusCode == http.StatusNoContent {
 		w.WriteHeader(statusCode)
