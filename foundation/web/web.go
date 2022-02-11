@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/dimfeld/httptreemux/v5"
+	"github.com/google/uuid"
 )
 
 // App is the entrypoint into out application and what configures our context
@@ -68,10 +70,25 @@ func (a *App) Handle(method string, group string, path string, handler Handler, 
 		// Visually you can think of each layer of middleware being called before calling the next middleware
 		// and wrapping the next handler as this comment does
 
+		// Pull the context from the request
+		ctx := r.Context()
+
+		// Set the context with the required values
+		// process the request
+		//
+		// could, later, associate a userid with a traceid to help with debugging ;)
+		v := Values{
+			TraceID: uuid.New().String(),
+			Now:     time.Now(),
+		}
+
+		ctx = context.WithValue(ctx, key, &v)
+
 		// handler is now one function, wrapped with middleware, that will call all the middleware functions
-		if err := handler(r.Context(), w, r); err != nil {
+		if err := handler(ctx, w, r); err != nil {
 			// Logging error - handle it
 			// We need a way to inject code from the business layer here (aka middleware)
+			a.SignalShutdown()
 			return
 		}
 

@@ -2,6 +2,7 @@ package testgrp
 
 import (
 	"context"
+	"math/rand"
 	"net/http"
 
 	"github.com/jnkroeker/makulu/foundation/web"
@@ -13,14 +14,17 @@ type Handlers struct {
 }
 
 func (h Handlers) Test(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	if n := rand.Intn(100); n%2 == 0 {
+		//return errors.New("untrusted error")
+		//return validate.NewRequestError(errors.New("trusted error"), http.StatusBadRequest)
+		//panic("testing panic")
+	}
+
 	status := struct {
 		Status string
 	}{
 		Status: "OK",
 	}
-
-	statusCode := http.StatusOK
-	h.Log.Infow("readiness", "statusCode", statusCode, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr)
 
 	// we don't want handler developers leaving encoding up to interpretation
 	// we ensure consistency of API response by abstracting that
