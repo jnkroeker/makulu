@@ -14,6 +14,7 @@ import (
 
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/debug/checkgrp"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/testgrp"
+	"github.com/jnkroeker/makulu/business/sys/auth"
 	"github.com/jnkroeker/makulu/business/web/mid"
 	"github.com/jnkroeker/makulu/foundation/web"
 	"go.uber.org/zap"
@@ -56,7 +57,7 @@ type APIMuxConfig struct {
 	Shutdown chan os.Signal
 	Log      *zap.SugaredLogger
 	// Metrics  *metrics.Metrics
-	// Auth     *auth.Auth
+	Auth *auth.Auth
 	// DB       *sqlx.DB
 }
 
@@ -88,4 +89,5 @@ func v1(app *web.App, cfg APIMuxConfig) {
 		Log: cfg.Log,
 	}
 	app.Handle(http.MethodGet, version, "/test", tgh.Test)
+	app.Handle(http.MethodGet, version, "/testauth", tgh.Test, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
 }
