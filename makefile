@@ -10,12 +10,26 @@ SHELL := /bin/bash
 
 # ============================================================================
 
+# To generate a private/public key PEM file 
+# openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048 
+# openssl rsa -pubout -in private.pem -out public.pem
+# ./action-admin genkey
+
+# Testing Auth
+# curl -il http://localhost:3000/v1/testauth
+# curl -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/testauth
+
+# ============================================================================
+
 # --help shows the user usage options for cmd line flags 
 # piping structured logging to logfmt tooling renders human-readable output
 run:
 	go run app/services/action-api/main.go
 	# go run app/services/action-api/main.go | go run app/tooling/logfmt/main.go
 	# go run app/services/action-api/main.go --help
+
+admin: 
+	go run app/tooling/admin/main.go
 
 
 # =======================================
