@@ -14,6 +14,8 @@ import (
 
 	"github.com/ardanlabs/conf"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers"
+	"github.com/jnkroeker/makulu/business/data"
+	"github.com/jnkroeker/makulu/business/feeds/loader"
 	"github.com/jnkroeker/makulu/business/sys/auth"
 	"github.com/jnkroeker/makulu/foundation/keystore"
 	"go.uber.org/automaxprocs/maxprocs"
@@ -74,6 +76,17 @@ func run(log *zap.SugaredLogger) error {
 			KeysFolder string `conf:"default:zarf/keys/"`
 			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 		}
+		Dgraph struct {
+			URL             string `conf:"default:http://0.0.0.0:8080"`
+			AuthHeaderName  string `conf:"default:X-Action-Auth"`
+			AuthToken       string
+			CloudHeaderName string `config:"default:X-Auth-Token"`
+			CloudToken      string
+		}
+		Search struct {
+			Categories []string `conf:"default:cycling;skiing;crossfit"`
+			// Radius     int      `conf:"default:5000"`
+		}
 	}{
 		Version: conf.Version{
 			SVN:  build,
@@ -128,6 +141,18 @@ func run(log *zap.SugaredLogger) error {
 		return fmt.Errorf("constructing auth: %w", err)
 	}
 
+	// =========================================================================
+	// Initialize GraphQL Support
+
+	// Capture the configuration for dgraph.
+	gqlConfig := data.GraphQLConfig{
+		URL:             cfg.Dgraph.URL,
+		AuthHeaderName:  cfg.Dgraph.AuthHeaderName,
+		AuthToken:       cfg.Dgraph.AuthToken,
+		CloudHeaderName: cfg.Dgraph.CloudHeaderName,
+		CloudToken:      cfg.Dgraph.CloudToken,
+	}
+
 	// ========================================================================================
 	// Start Debug Service
 
@@ -153,6 +178,12 @@ func run(log *zap.SugaredLogger) error {
 
 	log.Infow("startup", "status", "initializing API support")
 
+	loaderConfig := loader.Config{
+		Filter: loader.Filter{
+			Categories: cfg.Search.Categories,
+		},
+	}
+
 	// Make a channel to listen for an interrupt or terminate signal from the OS.
 	// Use a buffered channel because the signal package requires it.
 
@@ -163,6 +194,8 @@ func run(log *zap.SugaredLogger) error {
 		Shutdown: shutdown,
 		Log:      log,
 		Auth:     auth,
+		DB:       gqlConfig,
+		Loader:   loaderConfig,
 	})
 
 	// Construct a server to service the requests against the mux.

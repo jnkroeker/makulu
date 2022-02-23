@@ -13,7 +13,10 @@ import (
 	"os"
 
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/debug/checkgrp"
+	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/feedgrp"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/testgrp"
+	"github.com/jnkroeker/makulu/business/data"
+	"github.com/jnkroeker/makulu/business/feeds/loader"
 	"github.com/jnkroeker/makulu/business/sys/auth"
 	"github.com/jnkroeker/makulu/business/web/mid"
 	"github.com/jnkroeker/makulu/foundation/web"
@@ -57,8 +60,9 @@ type APIMuxConfig struct {
 	Shutdown chan os.Signal
 	Log      *zap.SugaredLogger
 	// Metrics  *metrics.Metrics
-	Auth *auth.Auth
-	// DB       *sqlx.DB
+	Auth   *auth.Auth
+	DB     data.GraphQLConfig
+	Loader loader.Config
 }
 
 // APIMux constructs an http.Handler with all application routes defined.
@@ -88,6 +92,14 @@ func v1(app *web.App, cfg APIMuxConfig) {
 	tgh := testgrp.Handlers{
 		Log: cfg.Log,
 	}
+
+	fg := feedgrp.Handlers{
+		Log:          cfg.Log,
+		GqlConfig:    cfg.DB,
+		LoaderConfig: cfg.Loader,
+	}
+
+	app.Handle(http.MethodPost, version, "/feed/upload", fg.Upload)
 	app.Handle(http.MethodGet, version, "/test", tgh.Test)
 	app.Handle(http.MethodGet, version, "/testauth", tgh.Test, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
 }
