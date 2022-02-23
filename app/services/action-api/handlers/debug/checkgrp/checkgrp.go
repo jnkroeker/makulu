@@ -62,6 +62,7 @@ func (h Handlers) Liveness(w http.ResponseWriter, r *http.Request) {
 
 	h.Log.Infow("liveness", "statusCode", statusCode, "method", r.Method, "path", r.URL.Path, "remoteaddr", r.RemoteAddr)
 }
+
 func response(w http.ResponseWriter, statusCode int, data interface{}) error {
 	// Convert the response value to JSON
 	jsonData, err := json.Marshal(data)

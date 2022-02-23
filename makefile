@@ -20,6 +20,24 @@ SHELL := /bin/bash
 # curl -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/testauth
 
 # ============================================================================
+# Seeding the dgraph database with curl
+
+# curl -H "Content-Type: application/json" http://172.22.0.2:8080/admin/schema -XPOST -d $'
+# type User {
+#  id: ID!
+#  name: String! @search(by: [exact])
+# }'
+
+# GraphQL Playground query example
+# {
+#   getUser(id:"0x9") {
+#     name
+#     email
+#   }
+# }
+
+
+# ============================================================================
 
 # --help shows the user usage options for cmd line flags 
 # piping structured logging to logfmt tooling renders human-readable output
@@ -31,8 +49,7 @@ run:
 admin: 
 	go run app/tooling/admin/main.go
 
-
-# =======================================
+# ============================================================================
 # Building containers 
 
 VERSION := 0.1 
@@ -57,7 +74,6 @@ tidy:
 # Running from within k8s/kind
 
 KIND_CLUSTER := action-cluster 
-
 
 kind-up:
 	kind create cluster \
@@ -98,3 +114,9 @@ kind-describe:
 	kubectl describe nodes
 	kubectl describe svc
 	kubectl describe pod -l app=action
+
+kind-schema:
+	go run app/services/action-admin/main.go --custom-functions-upload-feed-url=http://localhost:3000/v1/feed/upload schema
+
+kind-seed: kind-schema 
+	go run app/services/action-admin/main.go seed

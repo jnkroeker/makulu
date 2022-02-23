@@ -12,6 +12,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// KeyValues is how request values are stored/retrieved.
+const KeyValues ctxKey = 1
+
 // App is the entrypoint into out application and what configures our context
 // object for each of our http handlers.
 // We need the ability, if we find any integrity issues while the service is running,

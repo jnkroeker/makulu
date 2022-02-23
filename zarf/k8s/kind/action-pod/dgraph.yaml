@@ -59,11 +59,11 @@ spec:
           timeoutSeconds: 5 
           failureThreshold: 6 
           successThreshold: 1 
-        terminationGracePeriodSeconds: 60 
-        volumes: 
-        - name: datadir 
-          persistentVolumeClaim:
-            claimName: datadir 
+      terminationGracePeriodSeconds: 60 
+      volumes: 
+      - name: datadir 
+        persistentVolumeClaim:
+          claimName: datadir 
   updateStrategy:
     type: RollingUpdate 
   volumeClaimTemplates:
@@ -149,8 +149,8 @@ spec:
       terminationGracePeriodSeconds: 600 
       volumes:
       - name: datadir 
-      persistentVolumeClaim:
-        claimName: datadir 
+        persistentVolumeClaim:
+          claimName: datadir 
   updateStrategy:
     type: RollingUpdate 
   volumeClaimTemplates:
