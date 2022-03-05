@@ -8,7 +8,6 @@ import (
 	"github.com/ardanlabs/conf"
 	"github.com/jnkroeker/makulu/app/services/action-admin/commands"
 	"github.com/jnkroeker/makulu/business/data"
-	"github.com/jnkroeker/makulu/business/data/schema"
 	"github.com/jnkroeker/makulu/business/data/user"
 	"github.com/jnkroeker/makulu/business/feeds/loader"
 	"github.com/pkg/errors"
@@ -48,9 +47,6 @@ func run(log *zap.SugaredLogger) error {
 			URL            string `conf:"default:http://0.0.0.0:8080"`
 			AuthHeaderName string `conf:"default:X-Action-Auth"`
 			AuthToken      string
-		}
-		CustomFunctions struct {
-			UploadFeedURL string `conf:"default:http://0.0.0.0:3000/v1/feed/upload"`
 		}
 		Search struct {
 			Categories []string `conf:"default:cycling;skiing;crossfit"`
@@ -111,15 +107,11 @@ func run(log *zap.SugaredLogger) error {
 
 	switch cfg.Args.Num(0) {
 	case "schema":
-		config := schema.Config{
-			CustomFunctions: schema.CustomFunctions{
-				UploadFeedURL: cfg.CustomFunctions.UploadFeedURL,
-			},
-		}
 
-		if err := commands.Schema(gqlConfig, config); err != nil {
+		if err := commands.Schema(gqlConfig); err != nil {
 			return errors.Wrap(err, "updating schema")
 		}
+
 	case "seed":
 		config := loader.Config{
 			Filter: loader.Filter{
@@ -138,10 +130,15 @@ func run(log *zap.SugaredLogger) error {
 			Role:     cfg.Args.Num(4),
 		}
 
-		if err := commands.AddUser(log, gqlConfig, newUser); err != nil {
+		// TODO: do something with the created user id
+		if _, err := commands.AddUser(log, gqlConfig, newUser); err != nil {
 			return errors.Wrap(err, "adding user")
 		}
 	case "getuser":
+		email := cfg.Args.Num(1)
+		if err := commands.GetUser(log, gqlConfig, email); err != nil {
+			return errors.Wrap(err, "getting user")
+		}
 	case "keygen":
 	case "gentoken":
 	default:

@@ -32,7 +32,7 @@ type Filter struct {
 }
 
 // UpdateSchema creates/updates the schema for the database.
-func UpdateSchema(gqlConfig data.GraphQLConfig, schemaConfig schema.Config) error {
+func UpdateSchema(gqlConfig data.GraphQLConfig) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -43,7 +43,7 @@ func UpdateSchema(gqlConfig data.GraphQLConfig, schemaConfig schema.Config) erro
 
 	gql := data.NewGraphQL(gqlConfig)
 
-	schema, err := schema.New(gql, schemaConfig)
+	schema, err := schema.New(gql)
 	if err != nil {
 		return errors.Wrapf(err, "preparing schema")
 	}
@@ -98,7 +98,7 @@ func (l loader) upsertAction(ctx context.Context, traceID string, name string, l
 		Lat:  lat,
 		Lng:  lng,
 	}
-	newAction, err := l.store.action.Upsert(ctx, traceID, newAction)
+	newAction, err := l.store.action.Add(ctx, traceID, newAction)
 	if err != nil {
 		return action.Action{}, errors.Wrapf(err, "adding action: %s", name)
 	}

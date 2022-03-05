@@ -4,7 +4,6 @@ package user
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/ardanlabs/graphql"
 	"github.com/jnkroeker/makulu/business/data"
@@ -37,7 +36,7 @@ func NewStore(log *zap.SugaredLogger, gql *graphql.GraphQL) Store {
 // Add adds a new user to the database. If the user already exists
 // this function will fail but the found user is returned. If the user is
 // being added, the user with the id from the database is returned.
-func (s Store) Add(ctx context.Context, traceID string, nu NewUser, now time.Time) (User, error) {
+func (s Store) Add(ctx context.Context, traceID string, nu NewUser) (User, error) {
 	if usr, err := s.QueryByEmail(ctx, traceID, nu.Email); err == nil {
 		return usr, ErrExists
 	}
@@ -52,30 +51,58 @@ func (s Store) Add(ctx context.Context, traceID string, nu NewUser, now time.Tim
 		Email:        nu.Email,
 		Role:         nu.Role,
 		PasswordHash: string(hash),
-		DateCreated:  now,
-		DateUpdated:  now,
 	}
 
 	return s.add(ctx, traceID, usr)
 }
 
+// QueryByID returns the specified user from the database by the user id.
+func (s Store) QueryByID(ctx context.Context, traceID string, userID string) (User, error) {
+	query := fmt.Sprintf(`
+query {
+	getUser(id: %q) {
+		id
+		name
+		email
+		role
+		password_hash
+	}
+}`, userID)
+
+	s.log.Debug("%s: %s: %s", traceID, "user.QueryByID", data.Log(query))
+
+	// the response from the call has the name of the calling function in it
+
+	var result struct {
+		GetUser User `json:"getUser"`
+	}
+	if err := s.gql.Execute(ctx, query, &result); err != nil {
+		return User{}, errors.Wrap(err, "query failed")
+	}
+
+	if result.GetUser.ID == "" {
+		return User{}, ErrNotFound
+	}
+
+	return result.GetUser, nil
+}
+
 // QueryByEmail returns the specified user from the database by email
 func (s Store) QueryByEmail(ctx context.Context, traceID string, email string) (User, error) {
 	query := fmt.Sprintf(`
-	query {
-		queryUser(filter: { email: { eq: %q } }) {
-			id
-			name
-			email
-			role
-			password_hash 
-			date_created 
-			date_updated
-		}
-	}`, email)
+query {
+	queryUser(filter: { email: { eq: %q } }) {
+		id
+		name
+		email
+		role
+		password_hash 
+	}
+}`, email)
 
 	s.log.Debug("%s: %s: %s", traceID, "user.QueryByEmail", data.Log(query))
 
+	// the response from the call has the name of the calling function in it
 	var result struct {
 		QueryUser []User `json:"queryUser"`
 	}
@@ -97,20 +124,17 @@ func (s Store) add(ctx context.Context, traceID string, usr User) (User, error) 
 	mutation := fmt.Sprintf(`
 	mutation {
 		addUser(input: [{
-			email: %q 
 			name: %q 
+			email: %q 
 			role: %s 
 			password_hash: %q 
-			date_created: %q 
-			date_updated: %q
 		}])
 		%s
-	}`, usr.Name, usr.Email, usr.Role, usr.PasswordHash,
-		usr.DateCreated.UTC().Format(time.RFC3339),
-		usr.DateUpdated.UTC().Format(time.RFC3339),
-		result.document())
+	}`, usr.Name, usr.Email, usr.Role, usr.PasswordHash, result.document())
 
 	s.log.Debug("%s: %s: %s", traceID, "user.Add", data.Log(mutation))
+
+	// marshal the result of the mutation executed against the database into the result
 
 	if err := s.gql.Execute(ctx, mutation, &result); err != nil {
 		return User{}, errors.Wrap(err, "failed to add user")

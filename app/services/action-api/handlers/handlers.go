@@ -13,7 +13,6 @@ import (
 	"os"
 
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/debug/checkgrp"
-	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/feedgrp"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/testgrp"
 	"github.com/jnkroeker/makulu/business/data"
 	"github.com/jnkroeker/makulu/business/feeds/loader"
@@ -93,13 +92,21 @@ func v1(app *web.App, cfg APIMuxConfig) {
 		Log: cfg.Log,
 	}
 
-	fg := feedgrp.Handlers{
-		Log:          cfg.Log,
-		GqlConfig:    cfg.DB,
-		LoaderConfig: cfg.Loader,
-	}
+	// fg := feedgrp.Handlers{
+	// 	Log:          cfg.Log,
+	// 	GqlConfig:    cfg.DB,
+	// 	LoaderConfig: cfg.Loader,
+	// }
 
-	app.Handle(http.MethodPost, version, "/feed/upload", fg.Upload)
+	// act := actiongrp.Handlers{}
+
+	// usr := usergrp.Handlers{}
+
+	// app.Handle(http.MethodPost, version, "/feed/upload", fg.Upload)
+	// app.Handle(http.MethodGet, version, "/action/:id", act.QueryByID)
+	// construct a query string and send to below POST. look at ugh.Create in service repo
+	// app.Handle(http.MethodPost, version, "/action", act.Create)
+	// app.Handle(http.MethodGet, version, "/user/:id", usr.QueryByID)
 	app.Handle(http.MethodGet, version, "/test", tgh.Test)
 	app.Handle(http.MethodGet, version, "/testauth", tgh.Test, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
 }

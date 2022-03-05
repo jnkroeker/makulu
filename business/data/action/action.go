@@ -31,17 +31,17 @@ func NewStore(log *zap.SugaredLogger, gql *graphql.GraphQL) Store {
 
 // Upsert adds a new action to the database if it doesn't already exist by name
 // If the action already exists, the function will return an Action value with the existing ID
-func (s Store) Upsert(ctx context.Context, traceID string, act Action) (Action, error) {
+func (s Store) Add(ctx context.Context, traceID string, act Action) (Action, error) {
 	if act.ID != "" {
 		return Action{}, errors.New("action contains id")
 	}
 
-	return s.upsert(ctx, traceID, act)
+	return s.add(ctx, traceID, act)
 }
 
 // ===================================================================
 
-func (s Store) upsert(ctx context.Context, traceID string, act Action) (Action, error) {
+func (s Store) add(ctx context.Context, traceID string, act Action) (Action, error) {
 	var result id
 	mutation := fmt.Sprintf(`
 	mutation {
