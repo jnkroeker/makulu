@@ -33,7 +33,7 @@ type Action {
 	name: String! @search(by: [hash]) @id
 	lat: Float!
 	lng: Float!
-	User: User
+	User: String! @search(by: [hash]) @id
 }
 `
 

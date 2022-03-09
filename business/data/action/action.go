@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/ardanlabs/graphql"
+	"github.com/jnkroeker/makulu/business/data"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -39,6 +40,67 @@ func (s Store) Add(ctx context.Context, traceID string, act Action) (Action, err
 	return s.add(ctx, traceID, act)
 }
 
+// QueryByID returns the specified action from the database by the action id.
+func (s Store) QueryByID(ctx context.Context, traceID string, actionID string) (Action, error) {
+	query := fmt.Sprintf(`
+query {
+	getAction(id: %q) {
+		id
+		name
+		lat
+		lon
+		user
+	}
+}`, actionID)
+
+	s.log.Debug("%s: %s: %s", traceID, "action.QueryByID", data.Log(query))
+
+	// the response from the call has the name of the calling function in it
+
+	var result struct {
+		GetAction Action `json:"getAction"`
+	}
+	if err := s.gql.Execute(ctx, query, &result); err != nil {
+		return Action{}, errors.Wrap(err, "query failed")
+	}
+
+	if result.GetAction.ID == "" {
+		return Action{}, ErrNotFound
+	}
+
+	return result.GetAction, nil
+}
+
+// QueryByUser returns the specified action from the database by the user id.
+func (s Store) QueryByUser(ctx context.Context, traceID string, userID string) (Action, error) {
+	query := fmt.Sprintf(`
+query {
+	queryAction(filter: { User: { eq: %q } }) {
+		id
+		name
+		lat
+		lon
+		user 
+	}
+}`, userID)
+
+	s.log.Debug("%s: %s: %s", traceID, "action.QueryByUser", data.Log(query))
+
+	// the response from the call has the name of the calling function in it
+	var result struct {
+		QueryAction []Action `json:"queryAction"`
+	}
+	if err := s.gql.Execute(ctx, query, &result); err != nil {
+		return Action{}, errors.Wrap(err, "query failed")
+	}
+
+	if len(result.QueryAction) != 1 {
+		return Action{}, ErrNotFound
+	}
+
+	return result.QueryAction[0], nil
+}
+
 // ===================================================================
 
 func (s Store) add(ctx context.Context, traceID string, act Action) (Action, error) {
@@ -49,9 +111,10 @@ func (s Store) add(ctx context.Context, traceID string, act Action) (Action, err
 			name: %q
 			lat: %f 
 			lng: %f
+			user: %q
 		}])
 		%s
-	}`, act.Name, act.Lat, act.Lng, result.document())
+	}`, act.Name, act.Lat, act.Lng, act.User, result.document())
 
 	// s.log.Printf("%s: %s: %s", traceID, "city.Upsert", data.Log(mutation))
 

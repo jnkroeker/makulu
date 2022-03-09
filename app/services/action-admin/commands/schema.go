@@ -46,7 +46,7 @@ func Seed(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, config loader.Co
 		Name: "Stowe 01/05/22",
 		Lat:  44.53005,
 		Lng:  -72.78181,
-		User: action.User{ID: id},
+		User: id,
 	}
 
 	log.Info("Adding action: ", newAction.Name)

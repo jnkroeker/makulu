@@ -28,11 +28,11 @@ func AddAction(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, newAction a
 	)
 	traceID := uuid.New().String()
 
-	usr, err := store.Add(ctx, traceID, newAction)
+	act, err := store.Add(ctx, traceID, newAction)
 	if err != nil {
 		return errors.Wrap(err, "adding user")
 	}
 
-	fmt.Println("user id:", usr.ID)
+	fmt.Println("action id:", act.ID)
 	return nil
 }

@@ -6,12 +6,7 @@ type Action struct {
 	Name string  `json:"name"`
 	Lat  float64 `json:"lat"`
 	Lng  float64 `json:"lng"`
-	User User    `json:"user"`
-}
-
-// User captures the User ID in the relationship with an Action
-type User struct {
-	ID string `json:"id"`
+	User string  `json:"user"`
 }
 
 // NewAction contains information needed to create a new Action.
@@ -19,7 +14,7 @@ type NewAction struct {
 	Name string  `json:"name"`
 	Lat  float64 `json:"lat"`
 	Lng  float64 `json:"lng"`
-	User User    `json:"user"`
+	User string  `json:"user"`
 }
 
 // ==============================================================
