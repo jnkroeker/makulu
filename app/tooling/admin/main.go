@@ -54,14 +54,14 @@ func GenToken() error {
 	// iat (issued at time): Time at which the JWT was issued; can be used to determine age of the JWT
 	// jti (JWT ID): Unique identifier; can be used to prevent the JWT from being replayed (allows a token to be used only once)
 	claims := struct {
-		jwt.StandardClaims
+		jwt.RegisteredClaims
 		Roles []string
 	}{
-		StandardClaims: jwt.StandardClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "service project",
 			Subject:   "123456789",
-			ExpiresAt: time.Now().Add(8760 * time.Hour).Unix(),
-			IssuedAt:  time.Now().UTC().Unix(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(8760 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 		Roles: []string{"ADMIN"},
 	}

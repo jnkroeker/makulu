@@ -22,6 +22,8 @@ type Handlers struct {
 
 func (h *Handlers) Upload(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	var request schema.UploadFeedRequest
+
+	// marshal the http.Request into the format required to make the request
 	if err := web.Decode(r, &request); err != nil {
 		return errors.Wrap(err, "decoding request")
 	}

@@ -13,10 +13,10 @@ import (
 )
 
 // AddUser handles the creation of users.
-func AddUser(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, newUser user.NewUser) error {
+func AddUser(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, newUser user.NewUser) (string, error) {
 	if newUser.Name == "" || newUser.Email == "" || newUser.Password == "" || newUser.Role == "" {
 		fmt.Println("help: adduser <name> <email> <password> <role>")
-		return ErrHelp
+		return "", ErrHelp
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -28,11 +28,11 @@ func AddUser(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, newUser user.
 	)
 	traceID := uuid.New().String()
 
-	usr, err := store.Add(ctx, traceID, newUser, time.Now())
+	usr, err := store.Add(ctx, traceID, newUser)
 	if err != nil {
-		return errors.Wrap(err, "adding user")
+		return "", errors.Wrap(err, "adding user")
 	}
 
 	fmt.Println("user id:", usr.ID)
-	return nil
+	return usr.ID, nil
 }

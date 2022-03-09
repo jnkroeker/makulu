@@ -9,6 +9,14 @@ type Action struct {
 	User string  `json:"user"`
 }
 
+// NewAction contains information needed to create a new Action.
+type NewAction struct {
+	Name string  `json:"name"`
+	Lat  float64 `json:"lat"`
+	Lng  float64 `json:"lng"`
+	User string  `json:"user"`
+}
+
 // ==============================================================
 
 type id struct {

@@ -115,8 +115,17 @@ kind-describe:
 	kubectl describe svc
 	kubectl describe pod -l app=action
 
-kind-schema:
-	go run app/services/action-admin/main.go --custom-functions-upload-feed-url=http://localhost:3000/v1/feed/upload schema
+# Administration
 
-kind-seed: kind-schema 
+schema:
+	go run app/services/action-admin/main.go schema
+
+seed: schema 
 	go run app/services/action-admin/main.go seed
+
+# Running tests within the local machine
+
+test:
+	# Find test files inside the entire project file structure
+	go test ./... -count=1
+	staticcheck ./...
