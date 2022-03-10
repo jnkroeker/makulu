@@ -14,10 +14,12 @@ import (
 
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/debug/checkgrp"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/testgrp"
+	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/usergrp"
 	"github.com/jnkroeker/makulu/business/data"
+	"github.com/jnkroeker/makulu/business/data/user"
 	"github.com/jnkroeker/makulu/business/feeds/loader"
 	"github.com/jnkroeker/makulu/business/sys/auth"
-	"github.com/jnkroeker/makulu/business/web/mid"
+	"github.com/jnkroeker/makulu/business/web/v1/mid"
 	"github.com/jnkroeker/makulu/foundation/web"
 	"go.uber.org/zap"
 )
@@ -91,22 +93,32 @@ func v1(app *web.App, cfg APIMuxConfig) {
 	tgh := testgrp.Handlers{
 		Log: cfg.Log,
 	}
+	app.Handle(http.MethodGet, version, "/test", tgh.Test)
+	app.Handle(http.MethodGet, version, "/testauth", tgh.Test, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
+
+	// TODO: connect to Strava API using feedgrp
 
 	// fg := feedgrp.Handlers{
 	// 	Log:          cfg.Log,
 	// 	GqlConfig:    cfg.DB,
 	// 	LoaderConfig: cfg.Loader,
 	// }
+	// app.Handle(http.MethodPost, version, "/feed/upload", fg.Upload)
 
 	// act := actiongrp.Handlers{}
 
-	// usr := usergrp.Handlers{}
+	usr := usergrp.Handlers{
+		UserStore: user.NewStore(
+			cfg.Log,
+			data.NewGraphQL(cfg.DB),
+		),
+	}
+	app.Handle(http.MethodPost, version, "/users", usr.Create, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
+	app.Handle(http.MethodGet, version, "/user/:id", usr.QueryByID)
+	app.Handle(http.MethodGet, version, "/user/:email", usr.QueryByEmail)
 
-	// app.Handle(http.MethodPost, version, "/feed/upload", fg.Upload)
 	// app.Handle(http.MethodGet, version, "/action/:id", act.QueryByID)
 	// construct a query string and send to below POST. look at ugh.Create in service repo
 	// app.Handle(http.MethodPost, version, "/action", act.Create)
-	// app.Handle(http.MethodGet, version, "/user/:id", usr.QueryByID)
-	app.Handle(http.MethodGet, version, "/test", tgh.Test)
-	app.Handle(http.MethodGet, version, "/testauth", tgh.Test, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
+
 }

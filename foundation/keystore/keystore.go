@@ -1,6 +1,6 @@
 // Package keystore implements the auth.KeyStore interface. This implements
-// an in-memory keystore for JWT support.
-// Thsi package is good for writing tests, but not in production
+// an in-memory keystore for JWT support using a simple map
+// This package is good for writing tests, but not in production
 package keystore
 
 import (
@@ -93,6 +93,8 @@ func NewFS(fsys fs.FS) (*KeyStore, error) {
 
 	return &ks, nil
 }
+
+// Add and Remove could be used to rotate keys
 
 // Add adds a private key and combination kid to the store.
 func (ks *KeyStore) Add(privateKey *rsa.PrivateKey, kid string) {
