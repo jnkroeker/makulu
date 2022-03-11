@@ -1,4 +1,4 @@
-package usergrp
+package actiongrp
 
 import (
 	"context"
@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/jnkroeker/makulu/business/data/user"
-	"github.com/jnkroeker/makulu/business/sys/auth"
+	"github.com/jnkroeker/makulu/business/data/action"
 	"github.com/jnkroeker/makulu/business/sys/validate"
 	v1Web "github.com/jnkroeker/makulu/business/web/v1"
 	"github.com/jnkroeker/makulu/foundation/web"
@@ -15,13 +14,13 @@ import (
 
 // Handlers manages the set of user endpoints
 type Handlers struct {
-	UserStore user.Store
-	Auth      *auth.Auth
+	ActionStore action.Store
+	// Auth *auth.Auth
 }
 
 func (h Handlers) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	// recall that these values were set in context when we called the app.Handle()
-	// method (foundation/web/web.go) to respond to requests for creating a User.
+	// method (foundation/web/web.go) to respond to requests for creating an Action.
 	// Every time the mux receives a request that is passed to this method,
 	// new values are set in the context
 	v, err := web.GetValues(ctx)
@@ -29,12 +28,12 @@ func (h Handlers) Create(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	var nu user.NewUser
-	if err := web.Decode(r, &nu); err != nil {
+	var act action.Action
+	if err := web.Decode(r, &act); err != nil {
 		return fmt.Errorf("unable to decode payload: %w", err)
 	}
 
-	usr, err := h.UserStore.Add(ctx, v.TraceID, nu)
+	usr, err := h.ActionStore.Add(ctx, v.TraceID, act)
 	if err != nil {
 		return fmt.Errorf("user[%+v]: %w", &usr, err)
 	}
@@ -48,48 +47,38 @@ func (h Handlers) QueryByID(ctx context.Context, w http.ResponseWriter, r *http.
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	claims, err := auth.GetClaims(ctx)
-	if err != nil {
-		return v1Web.NewRequestError(auth.ErrorForbidden, http.StatusForbidden)
-	}
+	actionID := web.Param(r, "id")
 
-	userID := web.Param(r, "id")
-
-	// If you are not an admin and looking to retrieve someone other than yourself
-	if !claims.Authorized(auth.RoleAdmin) && claims.Subject != userID {
-		return v1Web.NewRequestError(auth.ErrorForbidden, http.StatusForbidden)
-	}
-
-	usr, err := h.UserStore.QueryByID(ctx, v.TraceID, userID)
+	usr, err := h.ActionStore.QueryByID(ctx, v.TraceID, actionID)
 	if err != nil {
 		switch {
 		case errors.Is(err, validate.ErrInvalidID):
 			return v1Web.NewRequestError(err, http.StatusBadRequest)
-		case errors.Is(err, user.ErrNotFound):
+		case errors.Is(err, action.ErrNotFound):
 			return v1Web.NewRequestError(err, http.StatusNotFound)
 		default:
-			return fmt.Errorf("ID[%s]: %w", userID, err)
+			return fmt.Errorf("ID[%s]: %w", actionID, err)
 		}
 	}
 
 	return web.Respond(ctx, w, usr, http.StatusOK)
 }
 
-func (h Handlers) QueryByEmail(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (h Handlers) QueryByUser(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 	v, err := web.GetValues(ctx)
 	if err != nil {
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	email := web.Param(r, "email")
+	user := web.Param(r, "user")
 
-	usr, err := h.UserStore.QueryByEmail(ctx, v.TraceID, email)
+	usr, err := h.ActionStore.QueryByUser(ctx, v.TraceID, user)
 	if err != nil {
 		switch {
-		case errors.Is(err, user.ErrNotFound):
+		case errors.Is(err, action.ErrNotFound):
 			return v1Web.NewRequestError(err, http.StatusNotFound)
 		default:
-			return fmt.Errorf("email[%s]: %w", email, err)
+			return fmt.Errorf("email[%s]: %w", user, err)
 		}
 	}
 

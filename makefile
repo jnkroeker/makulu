@@ -126,5 +126,6 @@ seed: schema
 
 test:
 	# Find test files inside the entire project file structure
+	# -count=1 ignores test cache and run all tests each time
 	go test ./... -count=1
 	staticcheck ./...

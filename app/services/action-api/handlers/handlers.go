@@ -13,9 +13,11 @@ import (
 	"os"
 
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/debug/checkgrp"
+	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/actiongrp"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/testgrp"
 	"github.com/jnkroeker/makulu/app/services/action-api/handlers/v1/usergrp"
 	"github.com/jnkroeker/makulu/business/data"
+	"github.com/jnkroeker/makulu/business/data/action"
 	"github.com/jnkroeker/makulu/business/data/user"
 	"github.com/jnkroeker/makulu/business/feeds/loader"
 	"github.com/jnkroeker/makulu/business/sys/auth"
@@ -42,13 +44,14 @@ func DebugStandardLibraryMux() *http.ServeMux {
 	return mux
 }
 
-func DebugMux(build string, log *zap.SugaredLogger) http.Handler {
+func DebugMux(build string, log *zap.SugaredLogger, gqlConfig data.GraphQLConfig) http.Handler {
 	mux := DebugStandardLibraryMux()
 
 	// Register debug check endpoints.
 	cgh := checkgrp.Handlers{
-		Build: build,
-		Log:   log,
+		Build:     build,
+		GqlConfig: gqlConfig,
+		Log:       log,
 	}
 	mux.HandleFunc("/debug/readiness", cgh.Readiness)
 	mux.HandleFunc("/debug/liveness", cgh.Liveness)
@@ -105,20 +108,25 @@ func v1(app *web.App, cfg APIMuxConfig) {
 	// }
 	// app.Handle(http.MethodPost, version, "/feed/upload", fg.Upload)
 
-	// act := actiongrp.Handlers{}
+	act := actiongrp.Handlers{
+		ActionStore: action.NewStore(
+			cfg.Log,
+			data.NewGraphQL(cfg.DB),
+		),
+	}
+	app.Handle(http.MethodPost, version, "/action", act.Create, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/action/:id", act.QueryByID, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/action/user/:user", act.QueryByUser, mid.Authenticate(cfg.Auth))
 
 	usr := usergrp.Handlers{
 		UserStore: user.NewStore(
 			cfg.Log,
 			data.NewGraphQL(cfg.DB),
 		),
+		Auth: cfg.Auth,
 	}
 	app.Handle(http.MethodPost, version, "/users", usr.Create, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
-	app.Handle(http.MethodGet, version, "/user/:id", usr.QueryByID)
-	app.Handle(http.MethodGet, version, "/user/:email", usr.QueryByEmail)
-
-	// app.Handle(http.MethodGet, version, "/action/:id", act.QueryByID)
-	// construct a query string and send to below POST. look at ugh.Create in service repo
-	// app.Handle(http.MethodPost, version, "/action", act.Create)
+	app.Handle(http.MethodGet, version, "/user/:id", usr.QueryByID, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/user/email/:email", usr.QueryByEmail, mid.Authenticate(cfg.Auth))
 
 }
