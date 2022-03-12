@@ -124,7 +124,7 @@ func GenToken() error {
 	}
 
 	var parsedClaims struct {
-		jwt.StandardClaims
+		jwt.RegisteredClaims
 		Roles []string
 	}
 

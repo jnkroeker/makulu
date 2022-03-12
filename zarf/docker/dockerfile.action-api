@@ -23,7 +23,7 @@ RUN nix-channel --update
 
 ARG BUILD_DATE 
 ARG BUILD_REF 
-# Not production oriented. Load keys into container
+# Not production oriented. Load keys into container to build in-mem key store.
 COPY --from=build_action-api /service/zarf/keys/. /service/zarf/keys/.
 # copy the Go binary produced in the first stage to its place in the final image
 COPY --from=build_action-api /service/app/services/action-api/action-api /service/action-api 

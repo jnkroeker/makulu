@@ -9,6 +9,10 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+var (
+	ErrorForbidden = errors.New("attempted action is not allowed")
+)
+
 // TODO: Swap out DIY in-memory keystore for Vault
 
 // KeyLookup declares a method set of behavior for looking up
@@ -25,7 +29,7 @@ type KeyLookup interface {
 // set of user claims and recreate the claims by parsing the token.
 //
 // the activeKID denotes the private key we are using to sign tokens
-// activeKID changes on key rotation
+// TODO: activeKID changes on key rotation
 type Auth struct {
 	activeKID string
 	keyLookup KeyLookup
@@ -35,10 +39,13 @@ type Auth struct {
 }
 
 // New creates an Auth to support authentication/authorization.
+//
+// First parameter asks for the active KID to be used for signing tokens.
+// Second parameter is for a concrete value that implements the KeyLookup interface
+// so we know how to find the private or public key that is coming in off the tokens.
 func New(activeKID string, keyLookup KeyLookup) (*Auth, error) {
 
-	// The activeKID represents the private key used to signed new tokens.
-	// validate that we can find the key
+	// validate that we can find a private key for the KID
 	_, err := keyLookup.PrivateKey(activeKID)
 	if err != nil {
 		return nil, errors.New("active KID does not exist in store")
@@ -50,6 +57,8 @@ func New(activeKID string, keyLookup KeyLookup) (*Auth, error) {
 	}
 
 	// implement the key function
+	//
+	// when we get the token, we look up the KID, convert it to a string,
 	// use the polymorphic call to PublicKey() to get the public key
 	keyFunc := func(t *jwt.Token) (interface{}, error) {
 		kid, ok := t.Header["kid"]

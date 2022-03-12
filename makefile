@@ -8,8 +8,6 @@ SHELL := /bin/bash
 # put 10,000 requests through a service to test metrics gathering, logging, the whole onion
 # hey -m GET -c 100 -n 10000 http://localhost:3000/v1/users/1/2
 
-# ============================================================================
-
 # To generate a private/public key PEM file 
 # openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048 
 # openssl rsa -pubout -in private.pem -out public.pem
@@ -17,6 +15,8 @@ SHELL := /bin/bash
 
 # Testing Auth
 # curl -il http://localhost:3000/v1/testauth
+
+# Assumes we have a token from running `make admin`
 # curl -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/testauth
 
 # ============================================================================
@@ -35,7 +35,6 @@ SHELL := /bin/bash
 #     email
 #   }
 # }
-
 
 # ============================================================================
 
@@ -127,5 +126,6 @@ seed: schema
 
 test:
 	# Find test files inside the entire project file structure
+	# -count=1 ignores test cache and run all tests each time
 	go test ./... -count=1
 	staticcheck ./...

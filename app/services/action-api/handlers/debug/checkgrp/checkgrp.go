@@ -2,26 +2,39 @@
 package checkgrp
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/jnkroeker/makulu/business/data"
 	"go.uber.org/zap"
 )
 
 type Handlers struct {
-	Build string
-	Log   *zap.SugaredLogger
+	Build     string
+	GqlConfig data.GraphQLConfig
+	Log       *zap.SugaredLogger
 }
 
 func (h Handlers) Readiness(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	status := "ok"
+	statusCode := http.StatusOK
+	err := data.Validate(ctx, h.GqlConfig.URL, 5*time.Second)
+	if err != nil {
+		status = "db not ready"
+		statusCode = http.StatusInternalServerError
+	}
+
 	data := struct {
 		Status string `json:"status"`
 	}{
-		Status: "OK",
+		Status: status,
 	}
-
-	statusCode := http.StatusOK
 
 	if err := response(w, statusCode, data); err != nil {
 		h.Log.Errorw("readiness", "ERROR", err)
