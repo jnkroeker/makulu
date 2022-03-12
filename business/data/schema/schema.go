@@ -29,11 +29,11 @@ type User {
 }
 
 type Action {
-	id: ID!
-	name: String! @search(by: [hash]) @id
-	lat: Float!
-	lng: Float!
-	User: String! @search(by: [hash]) @id
+  id: ID!
+  name: String! @search(by: [hash]) @id
+  lat: Float!
+  lng: Float!
+  user: String! @search(by: [hash]) @id
 }
 `
 

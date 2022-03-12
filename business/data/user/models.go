@@ -11,11 +11,11 @@ type User struct {
 
 // NewUser contains information needed to create a new User.
 type NewUser struct {
-	Name            string `json:"name"`
-	Email           string `json:"email"`
-	Role            string `json:"role"`
-	Password        string `json:"password"`
-	PasswordConfirm string `json:"password_confirm"`
+	Name            string `json:"name" validate:"required"`
+	Email           string `json:"email" validate:"required"`
+	Role            string `json:"role" validate:"required"`
+	Password        string `json:"password" validate:"required"`
+	PasswordConfirm string `json:"password_confirm" validate:"required"`
 }
 
 // =============================================================================

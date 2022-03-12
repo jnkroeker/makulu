@@ -42,7 +42,7 @@ func Seed(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, config loader.Co
 	}
 
 	// Create action with the returned User ID
-	newAction := action.Action{
+	newAction := action.NewAction{
 		Name: "Stowe 01/05/22",
 		Lat:  44.53005,
 		Lng:  -72.78181,

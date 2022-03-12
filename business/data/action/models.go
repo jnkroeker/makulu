@@ -3,10 +3,18 @@ package action
 // Action represents an action and its coordinates
 type Action struct {
 	ID   string  `json:"id,omitempty"`
-	Name string  `json:"name"`
-	Lat  float64 `json:"lat"`
-	Lng  float64 `json:"lng"`
-	User string  `json:"user"`
+	Name string  `json:"name" validate:"required"`
+	Lat  float64 `json:"lat" validate:"required"`
+	Lng  float64 `json:"lng" validate:"required"`
+	User string  `json:"user" validate:"required"`
+}
+
+// Action represents an action and its coordinates
+type NewAction struct {
+	Name string  `json:"name" validate:"required"`
+	Lat  float64 `json:"lat" validate:"required"`
+	Lng  float64 `json:"lng" validate:"required"`
+	User string  `json:"user" validate:"required"`
 }
 
 // ==============================================================
