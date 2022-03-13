@@ -95,3 +95,70 @@ func (h Handlers) QueryByEmail(ctx context.Context, w http.ResponseWriter, r *ht
 
 	return web.Respond(ctx, w, usr, http.StatusOK)
 }
+
+// Update a user in the system
+func (h Handlers) Update(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	v, err := web.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("web value missing from context")
+	}
+
+	claims, err := auth.GetClaims(ctx)
+	if err != nil {
+		return v1Web.NewRequestError(auth.ErrorForbidden, http.StatusForbidden)
+	}
+
+	userID := web.Param(r, "id")
+
+	// Dont allow if a user is updating someone other than themselves
+	if claims.Subject != userID {
+		return v1Web.NewRequestError(auth.ErrorForbidden, http.StatusForbidden)
+	}
+
+	var usr user.User
+	if err := web.Decode(r, &usr); err != nil {
+		return fmt.Errorf("unable to decode payload: %w", err)
+	}
+
+	if err := h.UserStore.Update(ctx, v.TraceID, usr); err != nil {
+		switch {
+		case errors.Is(err, user.ErrNotExists):
+			return v1Web.NewRequestError(err, http.StatusNotFound)
+		default:
+			return fmt.Errorf("ID[%s] User[%+v]: %w", userID, usr, err)
+		}
+	}
+
+	return web.Respond(ctx, w, nil, http.StatusOK)
+}
+
+// Delete a user from the system
+func (h Handlers) Delete(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	v, err := web.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("web value missing from context")
+	}
+
+	claims, err := auth.GetClaims(ctx)
+	if err != nil {
+		return v1Web.NewRequestError(auth.ErrorForbidden, http.StatusForbidden)
+	}
+
+	// Can only delete an account if Admin
+	if !claims.Authorized(auth.RoleAdmin) {
+		return v1Web.NewRequestError(auth.ErrorForbidden, http.StatusForbidden)
+	}
+
+	userID := web.Param(r, "id")
+
+	if err := h.UserStore.Delete(ctx, v.TraceID, userID); err != nil {
+		switch {
+		case errors.Is(err, user.ErrNotExists):
+			return v1Web.NewRequestError(err, http.StatusNotFound)
+		default:
+			return fmt.Errorf("ID[%s]: %w", userID, err)
+		}
+	}
+
+	return web.Respond(ctx, w, nil, http.StatusOK)
+}

@@ -116,7 +116,9 @@ func v1(app *web.App, cfg APIMuxConfig) {
 	}
 	app.Handle(http.MethodPost, version, "/action", act.Create, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/action/:id", act.QueryByID, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/action/user/:user", act.QueryByUser, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/action/user/:id", act.QueryByUser, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodPut, version, "/action/:id", act.Update, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodDelete, version, "/action/:id", act.Delete, mid.Authenticate(cfg.Auth))
 
 	usr := usergrp.Handlers{
 		UserStore: user.NewStore(
@@ -126,7 +128,9 @@ func v1(app *web.App, cfg APIMuxConfig) {
 		Auth: cfg.Auth,
 	}
 	app.Handle(http.MethodPost, version, "/users", usr.Create, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
-	app.Handle(http.MethodGet, version, "/user/:id", usr.QueryByID, mid.Authenticate(cfg.Auth))
-	app.Handle(http.MethodGet, version, "/user/email/:email", usr.QueryByEmail, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/users/:id", usr.QueryByID, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodGet, version, "/users/email/:email", usr.QueryByEmail, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodPut, version, "/users/:id", usr.Update, mid.Authenticate(cfg.Auth))
+	app.Handle(http.MethodDelete, version, "/users/:id", usr.Delete, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
 
 }

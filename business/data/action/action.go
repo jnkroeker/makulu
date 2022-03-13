@@ -52,7 +52,7 @@ func (s Store) Add(ctx context.Context, traceID string, na NewAction) (Action, e
 
 func (s Store) Update(ctx context.Context, traceID string, act Action) error {
 	if err := validate.Check(act); err != nil {
-		return fmt.Errorf("Validating data: %w", err)
+		return fmt.Errorf("validating data: %w", err)
 	}
 
 	if _, err := s.QueryByID(ctx, traceID, act.ID); err != nil {

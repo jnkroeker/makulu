@@ -7,6 +7,7 @@ import (
 
 	"github.com/ardanlabs/graphql"
 	"github.com/jnkroeker/makulu/business/data"
+	"github.com/jnkroeker/makulu/business/sys/validate"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -58,7 +59,7 @@ func (s Store) Add(ctx context.Context, traceID string, nu NewUser) (User, error
 
 func (s Store) Update(ctx context.Context, traceID string, usr User) error {
 	if err := validate.Check(usr); err != nil {
-		return fmt.Errorf("Validating data: %w", err)
+		return fmt.Errorf("validating data: %w", err)
 	}
 
 	if _, err := s.QueryByID(ctx, traceID, usr.ID); err != nil {

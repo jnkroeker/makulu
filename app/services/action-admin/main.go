@@ -141,6 +141,7 @@ func run(log *zap.SugaredLogger) error {
 		}
 	case "keygen":
 	case "gentoken":
+		// run `make admin` to execute tooling/admin/main.go and generate token
 	default:
 
 	}
