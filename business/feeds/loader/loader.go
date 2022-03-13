@@ -19,6 +19,7 @@ type Search struct {
 	Name string
 	Lat  float64
 	Lng  float64
+	User string
 }
 
 // Config defines the set of mandatory settings
@@ -63,7 +64,7 @@ func UpdateData(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, traceID st
 	gql := data.NewGraphQL(gqlConfig)
 	loader := newLoader(log, gql)
 
-	_, err := loader.upsertAction(ctx, traceID, search.Name, search.Lat, search.Lng)
+	_, err := loader.upsertAction(ctx, traceID, search.Name, search.Lat, search.Lng, search.User)
 	if err != nil {
 		return errors.Wrapf(err, "adding action")
 	}
@@ -92,18 +93,19 @@ func newLoader(log *zap.SugaredLogger, gql *graphql.GraphQL) loader {
 }
 
 // upsertAction adds the specified action into the database
-func (l loader) upsertAction(ctx context.Context, traceID string, name string, lat float64, lng float64) (action.Action, error) {
-	newAction := action.Action{
+func (l loader) upsertAction(ctx context.Context, traceID string, name string, lat float64, lng float64, user string) (action.Action, error) {
+	newAction := action.NewAction{
 		Name: name,
 		Lat:  lat,
 		Lng:  lng,
+		User: user,
 	}
-	newAction, err := l.store.action.Add(ctx, traceID, newAction)
+	act, err := l.store.action.Add(ctx, traceID, newAction)
 	if err != nil {
 		return action.Action{}, errors.Wrapf(err, "adding action: %s", name)
 	}
 
 	// log.Info("feed: Work: Upserted Action: ID: %s Name: %s Lat: %f Lng: %s", newAction.ID, name, lat, lng)
 
-	return newAction, nil
+	return act, nil
 }

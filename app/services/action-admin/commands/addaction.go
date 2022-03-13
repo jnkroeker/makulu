@@ -13,9 +13,9 @@ import (
 )
 
 // AddUser handles the creation of users.
-func AddAction(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, newAction action.Action) error {
-	if newAction.Name == "" || newAction.Lat == 0 || newAction.Lng == 0 {
-		fmt.Println("help: addaction <name> <Lat> <Lng> <role>")
+func AddAction(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, newAction action.NewAction) error {
+	if newAction.Name == "" || newAction.Lat == 0 || newAction.Lng == 0 || newAction.User == "" {
+		fmt.Printf("help: addaction %s %f %f %s", newAction.Name, newAction.Lat, newAction.Lng, newAction.User)
 		return ErrHelp
 	}
 
@@ -30,7 +30,7 @@ func AddAction(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, newAction a
 
 	act, err := store.Add(ctx, traceID, newAction)
 	if err != nil {
-		return errors.Wrap(err, "adding user")
+		return errors.Wrap(err, "adding action")
 	}
 
 	fmt.Println("action id:", act.ID)

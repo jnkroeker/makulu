@@ -79,6 +79,8 @@ func (a *App) Handle(method string, group string, path string, handler Handler, 
 		// Set the context with the required values
 		// process the request
 		//
+		// we call time.Now() for consistent time capture on requests
+		//
 		// could, later, associate a userid with a traceid to help with debugging ;)
 		v := Values{
 			TraceID: uuid.New().String(),

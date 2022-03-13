@@ -7,6 +7,7 @@ import (
 
 	"github.com/ardanlabs/graphql"
 	"github.com/jnkroeker/makulu/business/data"
+	"github.com/jnkroeker/makulu/business/sys/validate"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
@@ -32,9 +33,16 @@ func NewStore(log *zap.SugaredLogger, gql *graphql.GraphQL) Store {
 
 // Upsert adds a new action to the database if it doesn't already exist by name
 // If the action already exists, the function will return an Action value with the existing ID
-func (s Store) Add(ctx context.Context, traceID string, act Action) (Action, error) {
-	if act.ID != "" {
-		return Action{}, errors.New("action contains id")
+func (s Store) Add(ctx context.Context, traceID string, na NewAction) (Action, error) {
+	if err := validate.Check(na); err != nil {
+		return Action{}, fmt.Errorf("validating data: %w", err)
+	}
+
+	act := Action{
+		Name: na.Name,
+		Lat:  na.Lat,
+		Lng:  na.Lng,
+		User: na.User,
 	}
 
 	return s.add(ctx, traceID, act)
@@ -48,7 +56,7 @@ query {
 		id
 		name
 		lat
-		lon
+		lng
 		user
 	}
 }`, actionID)

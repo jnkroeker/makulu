@@ -28,7 +28,7 @@ func (h Handlers) Create(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return web.NewShutdownError("web value missing from context")
 	}
 
-	var act action.Action
+	var act action.NewAction
 	if err := web.Decode(r, &act); err != nil {
 		return fmt.Errorf("unable to decode payload: %w", err)
 	}
