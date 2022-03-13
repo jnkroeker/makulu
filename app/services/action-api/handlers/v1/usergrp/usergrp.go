@@ -162,3 +162,39 @@ func (h Handlers) Delete(ctx context.Context, w http.ResponseWriter, r *http.Req
 
 	return web.Respond(ctx, w, nil, http.StatusOK)
 }
+
+// Token provides an API token for the authenticated user.
+func (h Handlers) Token(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	v, err := web.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("web value missing from context")
+	}
+
+	email, pass, ok := r.BasicAuth()
+	if !ok {
+		err := errors.New("must provide email and password in Basic auth")
+		return v1Web.NewRequestError(err, http.StatusUnauthorized)
+	}
+
+	claims, err := h.UserStore.Authenticate(ctx, v.TraceID, email, pass)
+	if err != nil {
+		switch {
+		case errors.Is(err, user.ErrNotFound):
+			return v1Web.NewRequestError(err, http.StatusNotFound)
+		case errors.Is(err, user.ErrAuthenticationFailure):
+			return v1Web.NewRequestError(err, http.StatusUnauthorized)
+		default:
+			return fmt.Errorf("authenticating: %w", err)
+		}
+	}
+
+	var tkn struct {
+		Token string `json:"token"`
+	}
+	tkn.Token, err = h.Auth.GenerateToken(claims)
+	if err != nil {
+		return fmt.Errorf("generating token: %w", err)
+	}
+
+	return web.Respond(ctx, w, tkn, http.StatusOK)
+}

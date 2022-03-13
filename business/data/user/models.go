@@ -6,7 +6,7 @@ type User struct {
 	Name         string `json:"name"`
 	Email        string `json:"email"`
 	Role         string `json:"role"`
-	PasswordHash string `json:"password_hash"`
+	PasswordHash []byte `json:"password_hash"`
 }
 
 // NewUser contains information needed to create a new User.

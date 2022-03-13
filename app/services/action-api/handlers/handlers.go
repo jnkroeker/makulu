@@ -127,6 +127,7 @@ func v1(app *web.App, cfg APIMuxConfig) {
 		),
 		Auth: cfg.Auth,
 	}
+	app.Handle(http.MethodGet, version, "/users/token", usr.Token)
 	app.Handle(http.MethodPost, version, "/users", usr.Create, mid.Authenticate(cfg.Auth), mid.Authorize("ADMIN"))
 	app.Handle(http.MethodGet, version, "/users/:id", usr.QueryByID, mid.Authenticate(cfg.Auth))
 	app.Handle(http.MethodGet, version, "/users/email/:email", usr.QueryByEmail, mid.Authenticate(cfg.Auth))

@@ -8,6 +8,7 @@ import (
 	"github.com/ardanlabs/graphql"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jnkroeker/makulu/business/data"
+	"github.com/jnkroeker/makulu/business/data/action"
 	"github.com/jnkroeker/makulu/business/data/schema"
 	"github.com/jnkroeker/makulu/business/data/user"
 	"github.com/jnkroeker/makulu/business/ready"
@@ -50,6 +51,7 @@ func TestData(t *testing.T) {
 
 	t.Run("readiness", readiness(tc.url))
 	t.Run("user", addUser(tc))
+	t.Run("action", addAction(tc))
 }
 
 // waitReady provides support for making sure the database is ready to be used.
@@ -192,6 +194,61 @@ func addUser(tc TestConfig) func(t *testing.T) {
 					t.Fatalf("\t%s\tTest %d:\tShould get back the same user. Diff: %v", tests.Failed, testID, diff)
 				}
 				t.Logf("\t%s\tTest %d:\tShould get back the same user.", tests.Success, testID)
+			}
+		}
+	}
+	return tf
+}
+
+// addAction validates an action node can be added to the database.
+func addAction(tc TestConfig) func(t *testing.T) {
+	tf := func(t *testing.T) {
+		t.Log("Given the need to be able to validate storing an action")
+		{
+			testID := 0
+			t.Logf("\tTest %d:\tWhen handling a single action.", testID)
+			{
+				ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+				defer cancel()
+
+				gql := waitReady(t, ctx, testID, tc.url)
+
+				newAction := action.NewAction{
+					Name: "First Spring 2022 Ride",
+					Lat:  44.53005,
+					Lng:  -72.78181,
+					User: "35757",
+				}
+
+				store := action.NewStore(tc.log, gql)
+
+				addedAction, err := store.Add(ctx, "3456", newAction)
+				if err != nil {
+					t.Fatalf("\t%s\tTest %d:\tShould be able to add an action: %v", tests.Failed, testID, err)
+				}
+				t.Logf("\t%s\tTest %d:\tShould be able to add an action", tests.Success, testID)
+
+				retUser, err := store.QueryByID(ctx, "1235", addedAction.ID)
+				if err != nil {
+					t.Fatalf("\t%s\tTest %d:\tShould be able to query for an action by ID: %v", tests.Failed, testID, err)
+				}
+				t.Logf("\t%s\tTest %d:\tShould be able to query for a action by ID.", tests.Success, testID)
+
+				if diff := cmp.Diff(addedAction, retUser); diff != "" {
+					t.Fatalf("\t%s\tTest %d:\tShould get back the same action. Diff: %v", tests.Failed, testID, diff)
+				}
+				t.Logf("\t%s\tTest %d:\tShould get back the same action.", tests.Success, testID)
+
+				retUserTwo, err := store.QueryByUser(ctx, "1236", addedAction.User)
+				if err != nil {
+					t.Fatalf("\t%s\tTest %d:\tShould be able to query for an action by userID: %v", tests.Failed, testID, err)
+				}
+				t.Logf("\t%s\tTest %d:\tShould be able to query for n action by userID.", tests.Success, testID)
+
+				if diff := cmp.Diff(addedAction, retUserTwo); diff != "" {
+					t.Fatalf("\t%s\tTest %d:\tShould get back the same action. Diff: %v", tests.Failed, testID, diff)
+				}
+				t.Logf("\t%s\tTest %d:\tShould get back the same action.", tests.Success, testID)
 			}
 		}
 	}

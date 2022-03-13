@@ -19,6 +19,10 @@ SHELL := /bin/bash
 # Assumes we have a token from running `make admin`
 # curl -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/testauth
 
+# Also able to generate a token, after seeding, by querying /v1/users/token
+# curl -H "Authorization:  Basic <base64 encoded username:password>" http://localhost:3000/v1/users/token
+#                                   Sm9obiBLcm9la2VyOmdvcGhlcg==
+
 # ============================================================================
 # Seeding the dgraph database with curl
 
@@ -46,7 +50,7 @@ run:
 	# go run app/services/action-api/main.go --help
 
 admin: 
-	go run app/services/action-admin/main.go seed
+	go run app/services/action-admin/main.go gentoken "jnkroeker@gmail.com"
 	# go run app/tooling/admin/main.go (deprecated: does not use a valid user id for subject in token) 
 
 # ============================================================================

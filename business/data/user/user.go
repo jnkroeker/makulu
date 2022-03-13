@@ -3,10 +3,14 @@ package user
 
 import (
 	"context"
+	errs "errors"
 	"fmt"
+	"time"
 
 	"github.com/ardanlabs/graphql"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/jnkroeker/makulu/business/data"
+	"github.com/jnkroeker/makulu/business/sys/auth"
 	"github.com/jnkroeker/makulu/business/sys/validate"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -15,9 +19,10 @@ import (
 
 // Set of error variables for CRUD operations.
 var (
-	ErrNotExists = errors.New("user does not exist")
-	ErrExists    = errors.New("user exists")
-	ErrNotFound  = errors.New("user not found")
+	ErrNotExists             = errors.New("user does not exist")
+	ErrExists                = errors.New("user exists")
+	ErrNotFound              = errors.New("user not found")
+	ErrAuthenticationFailure = errors.New("authentication failed")
 )
 
 // Store manages the set of APIs for user access.
@@ -51,7 +56,7 @@ func (s Store) Add(ctx context.Context, traceID string, nu NewUser) (User, error
 		Name:         nu.Name,
 		Email:        nu.Email,
 		Role:         nu.Role,
-		PasswordHash: string(hash),
+		PasswordHash: hash,
 	}
 
 	return s.add(ctx, traceID, usr)
@@ -141,6 +146,39 @@ query {
 	}
 
 	return result.QueryUser[0], nil
+}
+
+// Authenticate finds a user by their email and verifies their password. On
+// success it returns a Claims User representing this user. The claims can be
+// used to generate a token for future authentication.
+func (s Store) Authenticate(ctx context.Context, traceID string, email string, password string) (auth.Claims, error) {
+	dbUsr, err := s.QueryByEmail(ctx, traceID, email)
+	if err != nil {
+		if errs.Is(err, ErrNotFound) {
+			return auth.Claims{}, ErrNotFound
+		}
+		return auth.Claims{}, fmt.Errorf("query: %w", err)
+	}
+
+	// Compare the provided password with the saved hash. Use the bcrypt
+	// comparison function so it is cryptographically secure.
+	if err := bcrypt.CompareHashAndPassword(dbUsr.PasswordHash, []byte(password)); err != nil {
+		return auth.Claims{}, ErrAuthenticationFailure
+	}
+
+	// If we are this far the request is valid. Create some claims for the user
+	// and generate their token.
+	claims := auth.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "phaction project",
+			Subject:   dbUsr.ID,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(8760 * time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Roles: []string{dbUsr.Role},
+	}
+
+	return claims, nil
 }
 
 // =============================================================================

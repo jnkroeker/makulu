@@ -72,7 +72,7 @@ func GenToken(log *zap.SugaredLogger, gqlConfig data.GraphQLConfig, email string
 		Roles []string
 	}{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "service project",
+			Issuer:    "phaction project",
 			Subject:   usr.ID,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(8760 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
