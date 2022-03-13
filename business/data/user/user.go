@@ -56,6 +56,31 @@ func (s Store) Add(ctx context.Context, traceID string, nu NewUser) (User, error
 	return s.add(ctx, traceID, usr)
 }
 
+func (s Store) Update(ctx context.Context, traceID string, usr User) error {
+	if err := validate.Check(usr); err != nil {
+		return fmt.Errorf("Validating data: %w", err)
+	}
+
+	if _, err := s.QueryByID(ctx, traceID, usr.ID); err != nil {
+		return ErrNotExists
+	}
+
+	return s.update(ctx, traceID, usr)
+}
+
+func (s Store) Delete(ctx context.Context, traceID, userID string) error {
+	if userID == "" {
+		return errors.New("user missing id")
+	}
+
+	if _, err := s.QueryByID(ctx, traceID, userID); err != nil {
+		return ErrNotExists
+	}
+
+	return s.delete(ctx, traceID, userID)
+
+}
+
 // QueryByID returns the specified user from the database by the user id.
 func (s Store) QueryByID(ctx context.Context, traceID string, userID string) (User, error) {
 	query := fmt.Sprintf(`
@@ -146,4 +171,59 @@ func (s Store) add(ctx context.Context, traceID string, usr User) (User, error) 
 
 	usr.ID = result.AddUser.User[0].ID
 	return usr, nil
+}
+
+func (s Store) update(ctx context.Context, traceID string, usr User) error {
+	var result updateResult
+	mutation := fmt.Sprintf(`
+	mutation {
+		updateUser(input: {
+			filter: { 
+			id: [%q]
+			},
+			set: {
+				email: %q 
+				name: %q
+				role: %s 
+				password_hash: %q
+			}
+		})
+		%s
+	}
+	`, usr.ID, usr.Email, usr.Name, usr.Role, usr.PasswordHash, result.document())
+
+	s.log.Debug("%s: %s: %s", traceID, "user.Update", data.Log(mutation))
+
+	if err := s.gql.Execute(ctx, mutation, &result); err != nil {
+		return errors.Wrap(err, "failed to update user")
+	}
+
+	if result.UpdateUser.NumUids != 1 {
+		msg := fmt.Sprintf("failed to update user: NumUids: %d", result.UpdateUser.NumUids)
+		return errors.New(msg)
+	}
+
+	return nil
+}
+
+func (s Store) delete(ctx context.Context, traceID string, userID string) error {
+	var result deleteResult
+	mutation := fmt.Sprintf(`
+	mutation {
+		deleteUser(filter: { id: [%q] })
+		%s
+	}`, userID, result.document())
+
+	s.log.Debug("%s: %s: %s", traceID, "user.Delete", data.Log(mutation))
+
+	if err := s.gql.Execute(ctx, mutation, &result); err != nil {
+		return errors.Wrap(err, "failed to delete user")
+	}
+
+	if result.DeleteUser.NumUids != 0 {
+		msg := fmt.Sprintf("failed to delete user: NumUids: %d Msg: %s", result.DeleteUser.NumUids, result.DeleteUser.Msg)
+		return errors.New(msg)
+	}
+
+	return nil
 }

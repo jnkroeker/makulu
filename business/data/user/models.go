@@ -24,7 +24,10 @@ type NewUser struct {
 type addResult struct {
 	AddUser struct {
 		User []struct {
-			ID string `json:"id"`
+			ID    string `json:"id"`
+			Email string `json:"email"`
+			Name  string `json:"name"`
+			Role  string `json:"role"`
 		} `json:"user"`
 	} `json:"addUser"`
 }
@@ -34,6 +37,54 @@ func (addResult) document() string {
 	return `{
 		user {
 			id
+			email
+			name
+			role
+		}
+	}`
+}
+
+type updateResult struct {
+	UpdateUser struct {
+		User []struct {
+			ID    string `json:"id"`
+			Email string `json:"email"`
+			Name  string `json:"name"`
+			Role  string `json:"role"`
+		} `json:"user"`
+		NumUids int `json:"numUids"`
+	} `json:"updateUser"`
+}
+
+func (updateResult) document() string {
+	return `{
+		user {
+			id
+			email
+			name
+			role
+		}
+	}`
+}
+
+type deleteResult struct {
+	DeleteUser struct {
+		User []struct {
+			ID    string `json:"id"`
+			Email string `json:"email"`
+			Name  string `json:"name"`
+			Role  string `json:"role"`
+		} `json:"user"`
+		NumUids int    `json:"numUids"`
+		Msg     string `json:"msg"`
+	} `json:"deleteUser"`
+}
+
+func (deleteResult) document() string {
+	return `{
+		user {
+			msg,
+			numUids,
 		}
 	}`
 }

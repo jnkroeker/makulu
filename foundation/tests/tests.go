@@ -27,6 +27,8 @@ const (
 // NewUnit creates a test value with necessary application state to run
 // database tests. It will return the host to use to connection to the database.
 func NewUnit(t *testing.T) (*zap.SugaredLogger, string, func()) {
+
+	// Capture the logs during the unit test by setting stdout to an os.Pipe reader
 	r, w, _ := os.Pipe()
 	old := os.Stdout
 	os.Stdout = w

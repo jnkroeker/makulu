@@ -34,3 +34,50 @@ func (id) document() string {
 		}	
 	}`
 }
+
+type updateResult struct {
+	UpdateAction struct {
+		Action []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+			Lat  string `json:"lat"`
+			Lng  string `json:"lng"`
+			User string `json:"user"`
+		} `json:"action"`
+		NumUids int `json:"numUids"`
+	} `json:"updateAction"`
+}
+
+func (updateResult) document() string {
+	return `{
+		user {
+			id
+			name
+			lat
+			lng
+			user
+		}
+	}`
+}
+
+type deleteResult struct {
+	DeleteAction struct {
+		Action []struct {
+			ID    string `json:"id"`
+			Email string `json:"email"`
+			Name  string `json:"name"`
+			Role  string `json:"role"`
+		} `json:"action"`
+		NumUids int    `json:"numUids"`
+		Msg     string `json:"msg"`
+	} `json:"deleteAction"`
+}
+
+func (deleteResult) document() string {
+	return `{
+		user {
+			msg,
+			numUids,
+		}
+	}`
+}
