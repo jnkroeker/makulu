@@ -141,7 +141,10 @@ func run(log *zap.SugaredLogger) error {
 		}
 	case "keygen":
 	case "gentoken":
-		// run `make admin` to execute tooling/admin/main.go and generate token
+		email := cfg.Args.Num(1)
+		if err := commands.GenToken(log, gqlConfig, email); err != nil {
+			return errors.Wrap(err, "generating token")
+		}
 	default:
 
 	}

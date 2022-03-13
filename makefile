@@ -46,7 +46,8 @@ run:
 	# go run app/services/action-api/main.go --help
 
 admin: 
-	go run app/tooling/admin/main.go
+	go run app/services/action-admin/main.go seed
+	# go run app/tooling/admin/main.go (deprecated: does not use a valid user id for subject in token) 
 
 # ============================================================================
 # Building containers 
