@@ -1,5 +1,8 @@
 # This creates a dgraph cluster with 1 dgraph Zero and 1 dgraph Alpha.
 
+# TODO: Is the database running in a different Pod than the action api?
+# do we communicate with the database using a sidecar from within the pod where the api is running?
+
 # This StatefulSet runs dgraph Zero.
 apiVersion: apps/v1 
 kind: StatefulSet 

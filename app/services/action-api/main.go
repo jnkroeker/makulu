@@ -49,6 +49,7 @@ func run(log *zap.SugaredLogger) error {
 
 	// Set the correct number of threads for the service
 	// based on what is available either by the machine or quotas.
+	// We limit the service to two CPUs in kind-action-patch.yaml
 	if _, err := maxprocs.Set(); err != nil {
 		return fmt.Errorf("maxprocs: %w", err)
 	}

@@ -1,4 +1,7 @@
-# this file patches the yaml in this directory into the base directory yaml
+# this file patches the yaml in this directory into the base directory kustomization.yaml
+# kustomize's job is to customize the complete namespace, deployment and service 
+# based on having different configuration files in different directories
+# it stitches yaml files together
 apiVersion: kustomize.config.k8s.io/v1beta1 
 kind: Kustomization 
 resources:

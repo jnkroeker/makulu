@@ -139,7 +139,7 @@ func run(log *zap.SugaredLogger) error {
 		if err := commands.GetUser(log, gqlConfig, email); err != nil {
 			return errors.Wrap(err, "getting user")
 		}
-	case "keygen":
+	case "genkey":
 	case "gentoken":
 	default:
 
