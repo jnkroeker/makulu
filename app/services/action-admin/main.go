@@ -140,9 +140,24 @@ func run(log *zap.SugaredLogger) error {
 			return errors.Wrap(err, "getting user")
 		}
 	case "genkey":
+		if err := commands.GenKey(); err != nil {
+			return errors.Wrap(err, "key generation")
+		}
 	case "gentoken":
+		userID := cfg.Args.Num(1)
+		kid := cfg.Args.Num(2)
+		if err := commands.GenToken(log, gqlConfig, userID, kid); err != nil {
+			return errors.Wrap(err, "generating token")
+		}
 	default:
-
+		fmt.Println("schema: create the schema in the database")
+		fmt.Println("seed: add data to the database")
+		fmt.Println("adduser: add a new user to the database")
+		fmt.Println("getuser: get a list of users from the database")
+		fmt.Println("genkey: generate a set of private/public key files")
+		fmt.Println("gentoken: generate a JWT for a user with claims")
+		fmt.Println("provide a command to get more help.")
+		return commands.ErrHelp
 	}
 
 	return nil

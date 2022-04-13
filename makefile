@@ -8,7 +8,7 @@ SHELL := /bin/bash
 # put 10,000 requests through a service to test metrics gathering, logging, the whole onion
 # hey -m GET -c 100 -n 10000 http://localhost:3000/v1/users/1/2
 
-# To generate a private/public key PEM file 
+# To generate a private/public key PEM file manually (this is handled by code by running make admin)
 # openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048 
 # openssl rsa -pubout -in private.pem -out public.pem
 # ./action-admin genkey
@@ -45,8 +45,17 @@ run:
 	# go run app/services/action-api/main.go | go run app/tooling/logfmt/main.go
 	# go run app/services/action-api/main.go --help
 
-admin: 
-	go run app/tooling/admin/main.go
+# ==============================================================================
+# Administration
+
+migrate:
+	go run app/services/action-admin/main.go schema
+
+seed: migrate
+	go run app/services/action-admin/main.go seed
+
+# admin: 
+# 	go run app/tooling/admin/main.go
 
 # ============================================================================
 # Building containers 

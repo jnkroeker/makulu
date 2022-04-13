@@ -200,6 +200,10 @@ func run(log *zap.SugaredLogger) error {
 	})
 
 	// Construct a server to service the requests against the mux.
+	//
+	// To do load shedding, we need an http.server value
+	// Instead of using ListenAndServe as a function on the mux
+	// we need to use it as a method against an http.Server
 	api := http.Server{
 		Addr:         cfg.Web.APIHost,
 		Handler:      apiMux,
