@@ -22,6 +22,16 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet 
       hostNetwork: true 
       terminationGracePeriodSeconds: 60
+      initContainers:
+      # containers to run to initialize the application
+      # TODO: this section should be a patch, 
+      # because we dont want to seed production
+      - name: init-schema 
+        image: action-api-image 
+        command: ['./action-admin', 'schema']
+      - name: init-seed 
+        image: action-api-image 
+        command: ['./action-admin', 'seed']
       # the containers to run in the Pod
       containers:
         # sales-api container configuration
