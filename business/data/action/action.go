@@ -110,11 +110,11 @@ query {
 func (s Store) QueryByUser(ctx context.Context, traceID string, userID string) (Action, error) {
 	query := fmt.Sprintf(`
 query {
-	queryAction(filter: { User: { eq: %q } }) {
+	queryAction(filter: { user: { eq: %q } }) {
 		id
 		name
 		lat
-		lon
+		lng
 		user 
 	}
 }`, userID)

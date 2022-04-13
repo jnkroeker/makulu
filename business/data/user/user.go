@@ -96,7 +96,6 @@ query {
 		name
 		email
 		role
-		password_hash
 	}
 }`, userID)
 

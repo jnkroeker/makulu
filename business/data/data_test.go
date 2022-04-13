@@ -243,7 +243,7 @@ func addAction(tc TestConfig) func(t *testing.T) {
 				if err != nil {
 					t.Fatalf("\t%s\tTest %d:\tShould be able to query for an action by userID: %v", tests.Failed, testID, err)
 				}
-				t.Logf("\t%s\tTest %d:\tShould be able to query for n action by userID.", tests.Success, testID)
+				t.Logf("\t%s\tTest %d:\tShould be able to query for an action by userID.", tests.Success, testID)
 
 				if diff := cmp.Diff(addedAction, retUserTwo); diff != "" {
 					t.Fatalf("\t%s\tTest %d:\tShould get back the same action. Diff: %v", tests.Failed, testID, diff)
