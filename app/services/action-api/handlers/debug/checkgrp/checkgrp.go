@@ -50,6 +50,7 @@ func (h Handlers) Liveness(w http.ResponseWriter, r *http.Request) {
 		host = "unavailable"
 	}
 
+	// Pod, PodIP, Node, Namespace are env variables that are set up in base-action.yaml
 	data := struct {
 		Status    string `json:"status,omitempty"`
 		Build     string `json:"build,omitempty"`
