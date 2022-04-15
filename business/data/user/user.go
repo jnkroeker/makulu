@@ -7,6 +7,7 @@ import (
 
 	"github.com/ardanlabs/graphql"
 	"github.com/jnkroeker/makulu/business/data"
+	"github.com/jnkroeker/makulu/business/sys/validate"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -37,6 +38,10 @@ func NewStore(log *zap.SugaredLogger, gql *graphql.GraphQL) Store {
 // this function will fail but the found user is returned. If the user is
 // being added, the user with the id from the database is returned.
 func (s Store) Add(ctx context.Context, traceID string, nu NewUser) (User, error) {
+	if err := validate.Check(nu); err != nil {
+		return User{}, fmt.Errorf("validating data: %w", err)
+	}
+
 	if usr, err := s.QueryByEmail(ctx, traceID, nu.Email); err == nil {
 		return usr, ErrExists
 	}

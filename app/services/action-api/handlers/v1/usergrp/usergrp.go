@@ -48,6 +48,7 @@ func (h Handlers) QueryByID(ctx context.Context, w http.ResponseWriter, r *http.
 		return web.NewShutdownError("web value missing from context")
 	}
 
+	// at this point we have run thru the middleware so we know there will be claims in the context
 	claims, err := auth.GetClaims(ctx)
 	if err != nil {
 		return v1Web.NewRequestError(auth.ErrorForbidden, http.StatusForbidden)

@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/dimfeld/httptreemux/v5"
-	"github.com/google/uuid"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // KeyValues is how request values are stored/retrieved.
@@ -21,7 +22,8 @@ const KeyValues ctxKey = 1
 // to initiate a clean shutdown.
 // Feel free to add configuration data/logic on this App struct
 type App struct {
-	*httptreemux.ContextMux
+	mux      *httptreemux.ContextMux
+	otmux    http.Handler
 	shutdown chan os.Signal
 	mw       []Middleware
 }
@@ -31,16 +33,34 @@ type App struct {
 // We dont want to the slice; in that case we must pass nil in cases we dont need middleware
 // APIs that require to pass nil are not as accurate as the could be.
 func NewApp(shutdown chan os.Signal, mw ...Middleware) *App {
+
+	// Create an OpenTelemetry HTTP Handler which wraps our router. This will start
+	// the initial span and annotate it witht information about the request/response
+	//
+	// This is configured to sue the W3C TraceContext standard to set the remote
+	// parent if a client request includes the appropriate headers.
+	// https://w3c.github.io/trace-context/
+
+	mux := httptreemux.NewContextMux()
 	return &App{
-		ContextMux: httptreemux.NewContextMux(),
-		shutdown:   shutdown,
-		mw:         mw,
+		mux:      mux,
+		otmux:    otelhttp.NewHandler(mux, "request"),
+		shutdown: shutdown,
+		mw:       mw,
 	}
 }
 
 // SignalShutdown is use to gracefully shutdown the app when an integrity issue is identified
 func (a *App) SignalShutdown() {
 	a.shutdown <- syscall.SIGTERM
+}
+
+// ServeHTTP implements the http.Handler interface. It's the entry point for
+// all http traffic and allows the opentelemetry mux to run first to handle
+// tracing. The opentelemetry mux then calls the application mux to handle
+// application traffic. Thsi was setup on line 44 in the NewApp function
+func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	a.otmux.ServeHTTP(w, r)
 }
 
 // A Handler is a type that handles an http request within our mini framework
@@ -76,6 +96,9 @@ func (a *App) Handle(method string, group string, path string, handler Handler, 
 		// Pull the context from the request
 		ctx := r.Context()
 
+		// Capture the parent request span from the context.
+		span := trace.SpanFromContext(ctx)
+
 		// Set the context with the required values
 		// process the request
 		//
@@ -83,7 +106,7 @@ func (a *App) Handle(method string, group string, path string, handler Handler, 
 		//
 		// could, later, associate a userid with a traceid to help with debugging ;)
 		v := Values{
-			TraceID: uuid.New().String(),
+			TraceID: span.SpanContext().TraceID().String(),
 			Now:     time.Now(),
 		}
 
@@ -112,5 +135,5 @@ func (a *App) Handle(method string, group string, path string, handler Handler, 
 
 	// the only thing we can ever actually bind to the mux is using the Handle method from the mux
 	// this is the true implementation of the mux; now living inside our App wrapper
-	a.ContextMux.Handle(method, finalPath, h)
+	a.mux.Handle(method, finalPath, h)
 }

@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-// won't pollute vendor folder with docker depoendencies just to open a container
-// use the exec package instead
+// won't pollute vendor folder with docker dependencies just to open a container
+// use the os/exec package instead
 
 // Container tracks information about the docker container started for tests.
 type Container struct {
@@ -69,6 +69,15 @@ func StopContainer(t *testing.T, id string) {
 		t.Fatalf("could not remove container: %v", err)
 	}
 	t.Log("Removed:", id)
+}
+
+// DumpContainerLogs outputs logs from the running docker container
+func DumpContainerLogs(t *testing.T, id string) {
+	out, err := exec.Command("docker", "logs", id).CombinedOutput()
+	if err != nil {
+		t.Fatalf("could not log container: %v", err)
+	}
+	t.Logf("Logs for %s\n%s:", id, out)
 }
 
 // Type assertions to validate all values exist in the doc map

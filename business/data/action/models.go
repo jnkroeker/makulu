@@ -1,6 +1,7 @@
 package action
 
 // Action represents an action and its coordinates
+// uses business/sys/validate package
 type Action struct {
 	ID   string  `json:"id,omitempty"`
 	Name string  `json:"name" validate:"required"`

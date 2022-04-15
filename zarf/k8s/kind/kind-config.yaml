@@ -11,3 +11,6 @@ nodes:
   # dgraph-alpha
   - containerPort: 8080 
     hostPort: 8080
+  # zipkin
+  - containerPort: 9411
+    hostPort: 9411

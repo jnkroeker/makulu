@@ -10,6 +10,7 @@ type User struct {
 }
 
 // NewUser contains information needed to create a new User.
+// uses business/sys/validate package
 type NewUser struct {
 	Name            string `json:"name" validate:"required"`
 	Email           string `json:"email" validate:"required"`
