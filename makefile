@@ -101,6 +101,8 @@ kind-load:
 kind-apply:
 	# kustomize produces a yaml document that can be applied thru kubectl tooling
 	# start from the kustomization.yaml in the kind/action-pod directory
+	kustomize build zarf/k8s/kind/zipkin-pod | kubectl apply -f -
+	kubectl wait --namespace=zipkin-system --timeout=120s --for=condition=Available deployment/zipkin-pod
 	kustomize build zarf/k8s/kind/action-pod | kubectl apply -f -
 
 kind-status:
@@ -110,6 +112,9 @@ kind-status:
 
 kind-logs:
 	kubectl logs -l app=action --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
+
+kind-logs-zipkin:
+	kubectl logs -l app=zipkin --namespace=zipkin-system --all-containers=true -f --tail=100
 
 kind-restart:
 	kubectl rollout restart deployment action-pod
