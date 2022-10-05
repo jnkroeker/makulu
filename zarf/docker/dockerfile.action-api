@@ -9,6 +9,10 @@ ARG BUILD_REF
 # Copy the source code into the container.
 COPY . /service 
 
+# Build the admin binary 
+WORKDIR /service/app/services/action-admin 
+RUN go build -ldflags "-X main.build=${BUILD_REF}"
+
 # Build the service binary 
 WORKDIR /service/app/services/action-api 
 RUN go build -ldflags "-X main.build=${BUILD_REF}"
@@ -25,7 +29,8 @@ ARG BUILD_DATE
 ARG BUILD_REF 
 # Not production oriented. Load keys into container to build in-mem key store.
 COPY --from=build_action-api /service/zarf/keys/. /service/zarf/keys/.
-# copy the Go binary produced in the first stage to its place in the final image
+# copy the Go binaries produced in the first stage to its place in the final image
+COPY --from=build_action-api /service/app/services/action-admin/action-admin /service/action-admin
 COPY --from=build_action-api /service/app/services/action-api/action-api /service/action-api 
 WORKDIR /service 
 CMD ["./action-api"]
